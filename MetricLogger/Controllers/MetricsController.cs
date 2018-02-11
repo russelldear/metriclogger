@@ -24,14 +24,18 @@ namespace MetricLogger.Controllers
         {
             try
             {
-                using (var cloudwatch = new AmazonCloudWatchClient("", "", RegionEndpoint.USEast1))
+                using (var cloudwatch = new AmazonCloudWatchClient(Environment.GetEnvironmentVariable("AWSAccessKey"), Environment.GetEnvironmentVariable("AWSSecret"), RegionEndpoint.USEast1))
                 {
+                    Console.WriteLine($"Metric received: {metric.Name} : {metric.Value} : {metric.Timestamp}");
+
+                    var timeDifference = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "New Zealand Standard Time") - DateTime.UtcNow;
+
                     var dataPoint = new MetricDatum
                     {
                         MetricName = metric.Name,
                         Unit = StandardUnit.Count,
                         Value = metric.Value,
-                        Timestamp = metric.Timestamp,
+                        Timestamp = metric.Timestamp.AddHours(-timeDifference.TotalHours),
                         Dimensions = new List<Dimension>(),
                         StatisticValues = new StatisticSet()
                     };
