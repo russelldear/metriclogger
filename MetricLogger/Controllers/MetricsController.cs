@@ -24,7 +24,7 @@ namespace MetricLogger.Controllers
         {
             try
             {
-                using (var cloudwatch = new AmazonCloudWatchClient("AKIAI7DJK2DW3LQKQUBQ", "kAj6lWY+gGNxRhLEndJo/nc0LMonLDkCT799MdwA", RegionEndpoint.USEast1))
+                using (var cloudwatch = new AmazonCloudWatchClient("", "", RegionEndpoint.USEast1))
                 {
                     var dataPoint = new MetricDatum
                     {
