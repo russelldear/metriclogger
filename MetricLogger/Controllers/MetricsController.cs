@@ -7,6 +7,7 @@ using Amazon.CloudWatch.Model;
 using Amazon.Runtime;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using NodaTime;
 
 namespace MetricLogger.Controllers
 {
@@ -28,7 +29,11 @@ namespace MetricLogger.Controllers
                 {
                     Console.WriteLine($"Metric received: {metric.Name} : {metric.Value} : {metric.Timestamp}");
 
-                    var timeDifference = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "New Zealand Standard Time") - DateTime.UtcNow;
+                    var nz = DateTimeZoneProviders.Tzdb["Pacific/Auckland"];
+                    
+                    var before = nz.AtStrictly(LocalDateTime.FromDateTime(DateTime.Now));
+
+                    var timeDifference = before.ToDateTimeUnspecified() - DateTime.UtcNow;
 
                     var dataPoint = new MetricDatum
                     {
