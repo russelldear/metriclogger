@@ -29,25 +29,19 @@ namespace MetricLogger.Controllers
                 {
                     Console.WriteLine($"Metric received: {metric.Name} : {metric.Value} : {metric.Timestamp}");
 
-                    var nz = DateTimeZoneProviders.Tzdb["Pacific/Auckland"];
+                    var utcTimezone = TimeZoneInfo.Utc;
+                    var nzTimezone = TimeZoneInfo.FindSystemTimeZoneById("Pacific/Auckland");
+
+                    var timestampAsLocal = TimeZoneInfo.ConvertTime(metric.Timestamp, nzTimezone, utcTimezone);
+
+                    Console.WriteLine(timestampAsLocal);
                     
-                    var nzTime = nz.AtStrictly(LocalDateTime.FromDateTime(DateTime.Now));
-                    
-                    Console.WriteLine($"nz: {nzTime.ToDateTimeUnspecified()}");
-                    Console.WriteLine($"month: {nzTime.ToDateTimeUnspecified().Month}");
-
-                    var timeDifference = nzTime.ToDateTimeUnspecified() - DateTime.UtcNow;
-
-                    Console.WriteLine(timeDifference.TotalHours);
-
-                    var hardcodedDiff = nzTime.IsDaylightSavingTime() ? 13 : 12;
-
                     var dataPoint = new MetricDatum
                     {
                         MetricName = metric.Name,
                         Unit = StandardUnit.Count,
                         Value = metric.Value,
-                        Timestamp = metric.Timestamp.AddHours(-hardcodedDiff),
+                        Timestamp = timestampAsLocal,
                         Dimensions = new List<Dimension>(),
                         StatisticValues = new StatisticSet()
                     };
