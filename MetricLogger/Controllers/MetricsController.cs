@@ -27,21 +27,16 @@ namespace MetricLogger.Controllers
             {
                 using (var cloudwatch = new AmazonCloudWatchClient(Environment.GetEnvironmentVariable("AWSAccessKey"), Environment.GetEnvironmentVariable("AWSSecret"), RegionEndpoint.USEast1))
                 {
-                    Console.WriteLine($"Metric received: {metric.Name} : {metric.Value} : {metric.Timestamp}");
+                    Console.WriteLine($"Metric received - {metric.Name} : {metric.Value} : {metric.Timestamp}");
 
-                    var utcTimezone = TimeZoneInfo.Utc;
-                    var nzTimezone = TimeZoneInfo.FindSystemTimeZoneById("Pacific/Auckland");
+                    var timestamp = GetTimestamp(metric);
 
-                    var timestampAsLocal = TimeZoneInfo.ConvertTime(metric.Timestamp, nzTimezone, utcTimezone);
-
-                    Console.WriteLine(timestampAsLocal);
-                    
                     var dataPoint = new MetricDatum
                     {
                         MetricName = metric.Name,
                         Unit = StandardUnit.Count,
                         Value = metric.Value,
-                        Timestamp = timestampAsLocal,
+                        Timestamp = timestamp,
                         Dimensions = new List<Dimension>(),
                         StatisticValues = new StatisticSet()
                     };
@@ -49,7 +44,7 @@ namespace MetricLogger.Controllers
                     var mdr = new PutMetricDataRequest
                     {
                         Namespace = "Environment",
-                        MetricData = new List<MetricDatum>{dataPoint}
+                        MetricData = new List<MetricDatum> { dataPoint }
                     };
 
                     var resp = cloudwatch.PutMetricDataAsync(mdr).Result;
@@ -75,13 +70,29 @@ namespace MetricLogger.Controllers
 
             return new OkResult();
         }
+
+        private static DateTime GetTimestamp(Metric metric)
+        {
+            var utcTimezone = TimeZoneInfo.Utc;
+            var nzTimezone = TimeZoneInfo.FindSystemTimeZoneById("Pacific/Auckland");
+
+            var timestampAsUtc = TimeZoneInfo.ConvertTime(metric.Timestamp, nzTimezone, utcTimezone);
+
+            Console.WriteLine($"Timestamp as UTC: {timestampAsUtc}");
+
+            return timestampAsUtc;
+        }
     }
 
     public class Metric
     {
+        [JsonProperty("name")]
         public string Name { get; set; }
-        public string Unit { get; set; }
+
+        [JsonProperty("value")]
         public double Value { get; set; }
+
+        [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }
     }
 }
