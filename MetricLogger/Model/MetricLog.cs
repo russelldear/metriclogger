@@ -1,23 +1,29 @@
 ﻿using System;
+using Amazon.DynamoDBv2.DataModel;
 using Newtonsoft.Json;
 
 namespace MetricLogger.Model
 {
+    [DynamoDBTable("Metrics")]
     public class MetricLog
     {
-        public MetricLog()
+        [DynamoDBHashKey]
+        [JsonIgnore]
+        public string MetricId
         {
-            MetricId = Guid.NewGuid();
+            get { return $"{Name}-{Timestamp:yyyy-MM-dd-hh-mm-ss-fff}"; }
+            set { }
         }
 
-        public Guid MetricId { get; set; }
-
+        [DynamoDBProperty]
         [JsonProperty("name")]
         public string Name { get; set; }
 
+        [DynamoDBProperty]
         [JsonProperty("value")]
         public double Value { get; set; }
 
+        [DynamoDBProperty]
         [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }
     }

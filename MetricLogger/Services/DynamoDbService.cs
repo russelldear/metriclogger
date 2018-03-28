@@ -36,7 +36,8 @@ namespace MetricLogger.Services
                     CreateTable(_tableName);
                 }
 
-                bool isTableAvailable = false;
+                var isTableAvailable = false;
+
                 while (!isTableAvailable)
                 {
                     Thread.Sleep(5000);
@@ -46,19 +47,9 @@ namespace MetricLogger.Services
 
                 var context = new DynamoDBContext(_dynamo);
 
-                var result = context.SaveAsync<MetricLog>(metric, (result) => 
-                {
-                    if (result.Exception == null)
-                    {
-                        Console.WriteLine(result);
-                    }
-                    else
-                    {
-                        Console.WriteLine(result.Exception);
-                    }
-                });
+                context.SaveAsync<MetricLog>(metric).Wait();
 
-                Console.WriteLine(result);
+                Console.WriteLine("Metric persisted.");
             }
             catch (Exception ex)
             {
