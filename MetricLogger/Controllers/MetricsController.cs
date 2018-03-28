@@ -6,14 +6,22 @@ using Amazon.CloudWatch;
 using Amazon.CloudWatch.Model;
 using Amazon.Runtime;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using NodaTime;
+using MetricLogger.Model;
+using MetricLogger.Services;
 
 namespace MetricLogger.Controllers
 {
     [Route("Metrics")]
     public class MetricsController : Controller
     {
+        private readonly DynamoDbService _dynamoDbService;
+
+        public MetricsController()
+        {
+            _dynamoDbService = new DynamoDbService();
+        }
+
         [HttpGet]
         public IActionResult Get()
         {
@@ -21,7 +29,7 @@ namespace MetricLogger.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody]Metric metric)
+        public IActionResult Post([FromBody]MetricLog metric)
         {
             try
             {
@@ -53,6 +61,8 @@ namespace MetricLogger.Controllers
 
                     Debug.Assert(resp.HttpStatusCode == System.Net.HttpStatusCode.OK);
                 }
+
+                _dynamoDbService.AddMetric(metric);
             }
             catch (Exception ex)
             {
@@ -71,7 +81,7 @@ namespace MetricLogger.Controllers
             return new OkResult();
         }
 
-        private static DateTime GetTimestamp(Metric metric)
+        private static DateTime GetTimestamp(MetricLog metric)
         {
             var utcTimezone = TimeZoneInfo.Utc;
             var nzTimezone = TimeZoneInfo.FindSystemTimeZoneById("Pacific/Auckland");
@@ -82,17 +92,5 @@ namespace MetricLogger.Controllers
 
             return timestampAsUtc;
         }
-    }
-
-    public class Metric
-    {
-        [JsonProperty("name")]
-        public string Name { get; set; }
-
-        [JsonProperty("value")]
-        public double Value { get; set; }
-
-        [JsonProperty("timestamp")]
-        public DateTime Timestamp { get; set; }
     }
 }
