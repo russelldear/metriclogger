@@ -4,14 +4,14 @@ using Newtonsoft.Json;
 
 namespace MetricLogger.Model
 {
-    [DynamoDBTable("Metrics")]
+    [DynamoDBTable("MetricLog")]
     public class MetricLog
     {
         [DynamoDBHashKey]
         [JsonIgnore]
         public string MetricId
         {
-            get { return $"{Name}-{Timestamp:yyyy-MM-dd-hh-mm-ss-fff}"; }
+            get { return $"{Name}"; }
             set { }
         }
 
@@ -23,7 +23,7 @@ namespace MetricLogger.Model
         [JsonProperty("value")]
         public double Value { get; set; }
 
-        [DynamoDBProperty]
+        [DynamoDBRangeKey]
         [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }
     }

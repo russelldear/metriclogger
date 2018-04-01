@@ -13,8 +13,9 @@ namespace MetricLogger.Services
 {
     public class DynamoDbService
     {
-        private const string _tableName = "Metrics";
+        private const string _tableName = "MetricLog";
         private const string _key = "MetricId";
+        private const string _sortKey = "Timestamp";
 
         private readonly AmazonDynamoDBClient _dynamo;
 
@@ -75,12 +76,21 @@ namespace MetricLogger.Services
                     {
                         AttributeName = _key,
                         KeyType = KeyType.HASH
+                    },
+                    new KeySchemaElement
+                    {
+                        AttributeName = _sortKey,
+                        KeyType = KeyType.RANGE
                     }
                 },
                 AttributeDefinitions = new List<AttributeDefinition>
                 {
                     new AttributeDefinition {
                         AttributeName = _key,
+                        AttributeType = ScalarAttributeType.S
+                    },
+                    new AttributeDefinition {
+                        AttributeName = _sortKey,
                         AttributeType = ScalarAttributeType.S
                     }
                 }
