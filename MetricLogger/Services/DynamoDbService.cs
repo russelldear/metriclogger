@@ -2,7 +2,6 @@
 using Amazon;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using Amazon.Runtime;
 using MetricLogger.Model;
@@ -30,21 +29,7 @@ namespace MetricLogger.Services
         {
             try
             {
-                var tableResponse = _dynamo.ListTablesAsync().Result;
-
-                if (!tableResponse.TableNames.Contains(_tableName))
-                {
-                    CreateTable(_tableName);
-                }
-
-                var isTableAvailable = false;
-
-                while (!isTableAvailable)
-                {
-                    Thread.Sleep(5000);
-                    var tableStatus = _dynamo.DescribeTableAsync(_tableName).Result;
-                    isTableAvailable = tableStatus.Table.TableStatus == "ACTIVE";
-                }
+                EnsureTable();
 
                 var context = new DynamoDBContext(_dynamo);
 
@@ -58,6 +43,26 @@ namespace MetricLogger.Services
             }
 
             return true;
+        }
+
+        private void EnsureTable()
+        {
+            var tableResponse = _dynamo.ListTablesAsync().Result;
+
+            if (!tableResponse.TableNames.Contains(_tableName))
+            {
+                CreateTable(_tableName);
+            }
+
+            var tableStatus = _dynamo.DescribeTableAsync(_tableName).Result;
+
+            var isTableAvailable = tableStatus.Table.TableStatus == "ACTIVE";
+
+            while (!isTableAvailable)
+            {
+                Thread.Sleep(5000);
+                isTableAvailable = tableStatus.Table.TableStatus == "ACTIVE";
+            }
         }
 
         private void CreateTable(string tableName)
@@ -96,7 +101,7 @@ namespace MetricLogger.Services
                 }
             }).Result;
 
-            Console.WriteLine(result.HttpStatusCode);
+            Console.WriteLine("Table create status: " + result.HttpStatusCode);
         }
     }
 }
