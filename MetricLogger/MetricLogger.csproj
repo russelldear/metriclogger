@@ -23,5 +23,10 @@
 
   <ItemGroup>
     <Folder Include="Services\" />
+    <Folder Include="Web\" />
+    <Folder Include="Web\bootstrap-datepicker\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Web\AddMetric.js" />
   </ItemGroup>
 </Project>

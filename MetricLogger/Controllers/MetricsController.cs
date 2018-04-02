@@ -31,51 +31,57 @@ namespace MetricLogger.Controllers
         [HttpPost]
         public IActionResult Post([FromBody]MetricLog metric)
         {
-            try
+            Request.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            Request.HttpContext.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+
+            if (metric.IsCloudWatchable())
             {
-                using (var cloudwatch = new AmazonCloudWatchClient(Environment.GetEnvironmentVariable("AWSAccessKey"), Environment.GetEnvironmentVariable("AWSSecret"), RegionEndpoint.USEast1))
+                try
                 {
-                    Console.WriteLine($"Metric received - {metric.Name} : {metric.Value} : {metric.Timestamp}");
-
-                    var timestamp = GetTimestamp(metric);
-
-                    var dataPoint = new MetricDatum
+                    using (var cloudwatch = new AmazonCloudWatchClient(Environment.GetEnvironmentVariable("AWSAccessKey"), Environment.GetEnvironmentVariable("AWSSecret"), RegionEndpoint.USEast1))
                     {
-                        MetricName = metric.Name,
-                        Unit = StandardUnit.Count,
-                        Value = metric.Value,
-                        Timestamp = timestamp,
-                        Dimensions = new List<Dimension>(),
-                        StatisticValues = new StatisticSet()
-                    };
+                        Console.WriteLine($"Metric received - {metric.Name} : {metric.Value} : {metric.Timestamp}");
 
-                    var mdr = new PutMetricDataRequest
-                    {
-                        Namespace = "Environment",
-                        MetricData = new List<MetricDatum> { dataPoint }
-                    };
+                        var timestamp = GetTimestamp(metric);
 
-                    var resp = cloudwatch.PutMetricDataAsync(mdr).Result;
+                        var dataPoint = new MetricDatum
+                        {
+                            MetricName = metric.Name,
+                            Unit = StandardUnit.Count,
+                            Value = metric.Value,
+                            Timestamp = timestamp,
+                            Dimensions = new List<Dimension>(),
+                            StatisticValues = new StatisticSet()
+                        };
 
-                    Console.WriteLine(resp.HttpStatusCode);
+                        var mdr = new PutMetricDataRequest
+                        {
+                            Namespace = "Environment",
+                            MetricData = new List<MetricDatum> { dataPoint }
+                        };
 
-                    Debug.Assert(resp.HttpStatusCode == System.Net.HttpStatusCode.OK);
+                        var resp = cloudwatch.PutMetricDataAsync(mdr).Result;
+
+                        Console.WriteLine(resp.HttpStatusCode);
+
+                        Debug.Assert(resp.HttpStatusCode == System.Net.HttpStatusCode.OK);
+                    }
+
+                    _dynamoDbService.AddMetric(metric);
                 }
-
-                _dynamoDbService.AddMetric(metric);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message + ex.StackTrace);
-
-                while (ex.InnerException != null)
+                catch (Exception ex)
                 {
-                    ex = ex.InnerException;
-
                     Console.WriteLine(ex.Message + ex.StackTrace);
-                }
 
-                return new BadRequestResult();
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+
+                        Console.WriteLine(ex.Message + ex.StackTrace);
+                    }
+
+                    return new BadRequestResult();
+                }
             }
 
             return new OkResult();
