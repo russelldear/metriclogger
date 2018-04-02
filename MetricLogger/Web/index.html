@@ -47,14 +47,18 @@
             e.preventDefault();
         });
 
+        function QuizMetric(drinks) {
+            this.drinks = drinks;
+        }
+
         function Metric(quizDate) {
             this.name = "quiz";
-            this.value = "1"
+            this.value = JSON.stringify(new QuizMetric($("#drink-count").val()));
             this.timestamp = quizDate;
         }
 
         $("#btn-post").click(function(){
-
+            alert(JSON.stringify(new QuizMetric($("#drink-count").val())));
             var metric = new Metric($("#quiz-date").val());
 
             $.ajax({

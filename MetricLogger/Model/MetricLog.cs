@@ -21,10 +21,20 @@ namespace MetricLogger.Model
 
         [DynamoDBProperty]
         [JsonProperty("value")]
-        public double Value { get; set; }
+        public string Value { get; set; }
 
         [DynamoDBRangeKey]
         [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }
+    }
+
+    public static class Extensions
+    {
+        public static bool IsCloudWatchable(this MetricLog metric)
+        {
+            double result;
+
+            return double.TryParse(metric.Value, out result);
+        }
     }
 }
