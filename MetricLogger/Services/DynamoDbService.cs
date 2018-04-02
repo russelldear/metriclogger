@@ -5,6 +5,7 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using Amazon.Runtime;
 using MetricLogger.Model;
+using MetricLogger.Model.Dynamo;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -33,7 +34,16 @@ namespace MetricLogger.Services
 
                 var context = new DynamoDBContext(_dynamo);
 
-                context.SaveAsync<MetricLog>(metric).Wait();
+                if (metric.IsStandardMetric())
+                {
+                    context.SaveAsync<MetricLog>(metric).Wait();
+                }
+                else
+                {
+                    var quizMetric = metric.ToQuizMetric();
+
+                    context.SaveAsync<QuizMetric>(quizMetric).Wait();
+                }
 
                 Console.WriteLine("Metric persisted.");
             }

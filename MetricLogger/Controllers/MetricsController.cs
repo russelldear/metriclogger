@@ -36,7 +36,7 @@ namespace MetricLogger.Controllers
 
             Console.WriteLine($"Metric received - {metric.Name} : {metric.Value} : {metric.Timestamp}");
 
-            if (metric.IsCloudWatchable())
+            if (metric.IsStandardMetric())
             {
                 if (!LogToCloudWatch(metric))
                 {
@@ -79,8 +79,6 @@ namespace MetricLogger.Controllers
                     var resp = cloudwatch.PutMetricDataAsync(mdr).Result;
 
                     Console.WriteLine(resp.HttpStatusCode);
-
-                    Debug.Assert(resp.HttpStatusCode == System.Net.HttpStatusCode.OK);
                 }
 
                 return true;

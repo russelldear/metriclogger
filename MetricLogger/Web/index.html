@@ -47,18 +47,24 @@
             e.preventDefault();
         });
 
-        function QuizMetric(drinks) {
+        function Participant(name, drinks) {
+            this.name = name;
             this.drinks = drinks;
+        }
+
+        function QuizMetric(quizDate) {
+            this.quizDate = quizDate;
+            this.participants = [ new Participant($("#participants").val(), $("#drink-count").val()) ]
         }
 
         function Metric(quizDate) {
             this.name = "quiz";
-            this.value = JSON.stringify(new QuizMetric($("#drink-count").val()));
+            this.value = JSON.stringify(new QuizMetric($("#quiz-date").val()));
             this.timestamp = quizDate;
         }
 
         $("#btn-post").click(function(){
-            alert(JSON.stringify(new QuizMetric($("#drink-count").val())));
+            alert(JSON.stringify(new QuizMetric($("#quiz-date").val())));
             var metric = new Metric($("#quiz-date").val());
 
             $.ajax({

@@ -25,6 +25,7 @@
     <Folder Include="Services\" />
     <Folder Include="Web\" />
     <Folder Include="Web\bootstrap-datepicker\" />
+    <Folder Include="Model\Dynamo\" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Web\AddMetric.js" />

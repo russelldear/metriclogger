@@ -30,7 +30,7 @@ namespace MetricLogger.Model
 
     public static class Extensions
     {
-        public static bool IsCloudWatchable(this MetricLog metric)
+        public static bool IsStandardMetric(this MetricLog metric)
         {
             double result;
 
