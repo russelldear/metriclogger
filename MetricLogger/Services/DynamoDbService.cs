@@ -1,12 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using Amazon;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using Amazon.Runtime;
 using MetricLogger.Model;
-using System.Collections.Generic;
-using System.Threading;
 
 namespace MetricLogger.Services
 {

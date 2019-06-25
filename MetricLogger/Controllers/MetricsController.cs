@@ -1,14 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Amazon;
 using Amazon.CloudWatch;
 using Amazon.CloudWatch.Model;
-using Amazon.Runtime;
-using Microsoft.AspNetCore.Mvc;
-using NodaTime;
 using MetricLogger.Model;
 using MetricLogger.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MetricLogger.Controllers
 {
@@ -31,8 +29,8 @@ namespace MetricLogger.Controllers
         [HttpPost]
         public IActionResult Post([FromBody]MetricLog metric)
         {
-            Request.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            Request.HttpContext.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+            //Request.HttpContext.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            //Request.HttpContext.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
 
             Console.WriteLine($"Metric received - {metric.Name} : {metric.Value} : {metric.Timestamp}");
 

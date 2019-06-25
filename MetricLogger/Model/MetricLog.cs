@@ -27,14 +27,4 @@ namespace MetricLogger.Model
         [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }
     }
-
-    public static class Extensions
-    {
-        public static bool IsCloudWatchable(this MetricLog metric)
-        {
-            double result;
-
-            return double.TryParse(metric.Value, out result);
-        }
-    }
 }
