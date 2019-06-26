@@ -25,28 +25,7 @@ namespace MetricLogger.Controllers
         {
             return new OkResult();
         }
-        /*
-        [HttpPost]
-        public IActionResult Post([FromBody]MetricLog metric)
-        {
-            Console.WriteLine($"Metric received - {metric.Name} : {metric.Value} : {metric.Timestamp}");
 
-            if (metric.IsCloudWatchable())
-            {
-                if (!LogToCloudWatch(metric))
-                {
-                    return new BadRequestResult();
-                }
-            }
-
-            if (!LogToDynamo(metric))
-            {
-                return new BadRequestResult();
-            }
-
-            return new OkResult();
-        }
-        */
         [HttpPost]
         public IActionResult Post([FromBody]MetricLogs metricContainer)
         {
@@ -153,10 +132,5 @@ namespace MetricLogger.Controllers
 
             return timestampAsUtc;
         }
-    }
-
-    public class MetricLogs
-    {
-        public List<MetricLog> Metrics { get; set; }
     }
 }
