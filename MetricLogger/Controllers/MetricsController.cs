@@ -1,58 +1,136 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using Amazon;
+using Amazon.CloudWatch;
+using Amazon.CloudWatch.Model;
+using MetricLogger.Model;
+using MetricLogger.Services;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace MetricLogger.Controllers
 {
-    [Route("Metlink")]
-    public class MetlinkController : Controller
+    [Route("Metrics")]
+    public class MetricsController : Controller
     {
-        private readonly HttpClient _client;
+        private readonly DynamoDbService _dynamoDbService;
 
-        public MetlinkController()
+        public MetricsController()
         {
-            _client = new HttpClient { BaseAddress = "https://www.metlink.org.nz/api/v1/StopDepartures" };
+            _dynamoDbService = new DynamoDbService();
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get(string stop)
+        public IActionResult Get()
         {
-            var response = await _client.GetAsync($"/{stop}");
+            return new OkResult();
+        }
 
-            if (response.IsSuccessStatusCode)
+        [HttpPost]
+        public IActionResult Post([FromBody]MetricLogs metricContainer)
+        {
+            foreach (var metric in metricContainer.Metrics)
             {
-                var result = await response.Content.ReadAsAsync<MetlinkResponse>();
+                Console.WriteLine($"Metric received - {metric.Name} : {metric.Value} : {metric.Timestamp}");
 
-                var nextOutboundTime = result.Services
-                    .Where(s => s.Direction == "Inbound")
-                    .OrderByDescending(s => s.ExpectedDeparture)
-                    .Select(s => s.ExpectedDeparture)
-                    .First()
-                    .ToString("HH:mm");
+                if (metric.IsCloudWatchable())
+                {
+                    if (!LogToCloudWatch(metric))
+                    {
+                        return new BadRequestResult();
+                    }
+                }
 
-                return Ok(nextOutboundTime);
+                if (!LogToDynamo(metric))
+                {
+                    return new BadRequestResult();
+                }
             }
 
-            return Ok("Dunno");
+            return new OkResult();
         }
-    }
 
-    public partial class MetlinkResponse
-    {
-        [JsonProperty("Services")]
-        public List<Service> Services { get; set; }
-    }
+        private bool LogToCloudWatch(MetricLog metric)
+        {
+            try
+            {
+                using (var cloudwatch = new AmazonCloudWatchClient(Environment.GetEnvironmentVariable("AWSAccessKey"), Environment.GetEnvironmentVariable("AWSSecret"), RegionEndpoint.USEast1))
+                {
+                    var timestamp = GetTimestamp(metric);
 
-    public partial class Service
-    {
-        [JsonProperty("Direction")]
-        public string Direction { get; set; }
+                    var dataPoint = new MetricDatum
+                    {
+                        MetricName = metric.Name,
+                        Unit = StandardUnit.Count,
+                        Value = double.Parse(metric.Value),
+                        TimestampUtc = timestamp,
+                        Dimensions = new List<Dimension>(),
+                        StatisticValues = new StatisticSet()
+                    };
 
-        [JsonProperty("ExpectedDeparture")]
-        public DateTime ExpectedDeparture { get; set; }
+                    var mdr = new PutMetricDataRequest
+                    {
+                        Namespace = "Environment",
+                        MetricData = new List<MetricDatum> { dataPoint }
+                    };
+
+                    var resp = cloudwatch.PutMetricDataAsync(mdr).Result;
+
+                    Console.WriteLine(resp.HttpStatusCode);
+
+                    Debug.Assert(resp.HttpStatusCode == System.Net.HttpStatusCode.OK);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message + ex.StackTrace);
+
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+
+                    Console.WriteLine(ex.Message + ex.StackTrace);
+                }
+
+                return false;
+            }
+        }
+
+        private bool LogToDynamo(MetricLog metric)
+        {
+            try
+            {
+                _dynamoDbService.AddMetric(metric);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message + ex.StackTrace);
+
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+
+                    Console.WriteLine(ex.Message + ex.StackTrace);
+                }
+
+                return false;
+            }
+        }
+
+        private static DateTime GetTimestamp(MetricLog metric)
+        {
+            var utcTimezone = TimeZoneInfo.Utc;
+            var nzTimezone = TimeZoneInfo.FindSystemTimeZoneById("Pacific/Auckland");
+
+            var timestampAsUtc = TimeZoneInfo.ConvertTime(metric.Timestamp, nzTimezone, utcTimezone);
+
+            Console.WriteLine($"Timestamp as UTC: {timestampAsUtc}");
+
+            return timestampAsUtc;
+        }
     }
 }
