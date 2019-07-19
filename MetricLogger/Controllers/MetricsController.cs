@@ -76,7 +76,7 @@ namespace MetricLogger.Controllers
 
                     var resp = cloudwatch.PutMetricDataAsync(mdr).Result;
 
-                    Console.WriteLine(resp.HttpStatusCode);
+                    //Console.WriteLine(resp.HttpStatusCode);
 
                     Debug.Assert(resp.HttpStatusCode == System.Net.HttpStatusCode.OK);
                 }
@@ -128,7 +128,7 @@ namespace MetricLogger.Controllers
 
             var timestampAsUtc = TimeZoneInfo.ConvertTime(metric.Timestamp, nzTimezone, utcTimezone);
 
-            Console.WriteLine($"Timestamp as UTC: {timestampAsUtc}");
+            //Console.WriteLine($"Timestamp as UTC: {timestampAsUtc}");
 
             return timestampAsUtc;
         }

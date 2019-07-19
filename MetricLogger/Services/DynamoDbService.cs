@@ -35,7 +35,7 @@ namespace MetricLogger.Services
 
                 context.SaveAsync<MetricLog>(metric).Wait();
 
-                Console.WriteLine("Metric persisted.");
+                //Console.WriteLine("Metric persisted.");
             }
             catch (Exception ex)
             {
